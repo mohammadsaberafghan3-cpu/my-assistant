@@ -1,0 +1,9 @@
+const initProgressCallback = (report) => {
+  console.log(report.text);
+  // می‌توانی درصد پیشرفت را در صفحه نشان دهی
+};
+
+const selectedModel = "Phi-3-mini-4k-instruct-q4f32_1-MLC"; // ~2.5GB
+
+const engine = new webllm.MLCEngine();
+await engine.reload(selectedModel, initProgressCallback);

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دستیار واقعی WebLLM - آفلاین</title>
+    <style>
+        body { font-family: Tahoma; max-width: 600px; margin: auto; padding: 20px; background: #121212; color: #eee; }
+        .chat { background: #1e1e2f; border-radius: 20px; padding: 15px; height: 500px; overflow-y: auto; }
+        .user { text-align: left; color: #9eff9e; margin: 10px; }
+        .bot { text-align: right; color: #ffd966; margin: 10px; }
+        .progress { background: #333; padding: 8px; border-radius: 20px; font-size: 0.8rem; text-align: center; }
+        input, button { padding: 10px; margin-top: 10px; width: 100%; box-sizing: border-box; }
+        button { background: #4caf50; color: white; border: none; cursor: pointer; }
+        button:disabled { background: #777; }
+    </style>
+</head>
+<body>
+    <h2>دستیار واقعی (WebLLM) - کاملاً آفلاین</h2>
+    <div class="progress" id="progress">در حال آماده‌سازی مدل... (اولین بار نیاز به دانلود ~2.5GB دارد)</div>
+    <div class="chat" id="chatLog"></div>
+    <input type="text" id="userInput" placeholder="سوال خود را بپرس..." autocomplete="off">
+    <button id="sendBtn" disabled>ارسال</button>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as webllm from "@mlc-ai/web-llm";
+        
+        let engine = null;
+        const chatLog = document.getElementById("chatLog");
+        const progressDiv = document.getElementById("progress");
+        const sendBtn = document.getElementById("sendBtn");
+        const userInput = document.getElementById("userInput");
+
+        function addMessage(sender, text) {
+            const msg = document.createElement("div");
+            msg.className = sender;
+            msg.innerHTML = `<strong>${sender === "user" ? "شما:" : "دستیار:"}</strong> ${text}`;
+            chatLog.appendChild(msg);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        async function loadModel() {
+            try {
+                const modelId = "Phi-3-mini-4k-instruct-q4f32_1-MLC"; // مناسب موبایل
+                engine = new webllm.MLCEngine();
+                await engine.reload(modelId, (report) => {
+                    progressDiv.innerText = `بارگذاری مدل: ${report.text} (${Math.round(report.progress * 100)}%)`;
+                });
+                progressDiv.innerText = "✅ مدل آماده است! می‌توانی بپرسی.";
+                sendBtn.disabled = false;
+                addMessage("bot", "سلام! من یک دستیار هوش مصنوعی واقعی هستم. هر سوالی بپرس، کاملاً آفلاین جواب می‌دهم.");
+            } catch (err) {
+                progressDiv.innerText = "❌ خطا در بارگذاری مدل: " + err.message;
+                console.error(err);
+            }
+        }
+
+        async function sendMessage() {
+            const userMsg = userInput.value.trim();
+            if (!userMsg || !engine) return;
+            addMessage("user", userMsg);
+            userInput.value = "";
+            sendBtn.disabled = true;
+            try {
+                const reply = await engine.chat.completions.create({
+                    messages: [{ role: "user", content: userMsg }]
+                });
+                const botMsg = reply.choices[0].message.content;
+                addMessage("bot", botMsg);
+            } catch (err) {
+                addMessage("bot", "خطا: " + err.message);
+            }
+            sendBtn.disabled = false;
+        }
+
+        sendBtn.onclick = sendMessage;
+        userInput.onkeypress = (e) => { if (e.key === "Enter") sendMessage(); };
+        
+        loadModel();
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+const userMessage = "سلام، چطوری؟";
+const reply = await engine.chat.completions.create({
+  messages: [{ role: "user", content: userMessage }]
+});
+console.log(reply.choices[0].message.content);
