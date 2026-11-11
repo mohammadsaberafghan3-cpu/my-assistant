@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,7 +29,7 @@ class OrionMessage {
   Map<String, Object?> toJson() => {'text': text, 'fromUser': fromUser, 'time': time.toIso8601String()};
   factory OrionMessage.fromJson(Map<String, Object?> json) => OrionMessage(
     json['text'] as String? ?? '',
-    json['fromUser'] as bool? ?? false,
+    json['fromUser'] == true || json['fromUser'] == 'true',
     time: DateTime.tryParse(json['time'] as String? ?? '') ?? DateTime.now(),
   );
 }
@@ -38,15 +40,30 @@ class OrionMemory {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
     return raw.map((line) {
-      try { return OrionMessage.fromJson(Map<String, Object?>.from(Uri.splitQueryString(line))); }
-      catch (_) { return OrionMessage(line, false); }
+      // Read the current JSON format and migrate the earlier query-string format.
+      try {
+        final decoded = jsonDecode(line);
+        if (decoded is Map<String, dynamic>) {
+          return OrionMessage.fromJson(Map<String, Object?>.from(decoded));
+        }
+      } catch (_) {
+        try {
+          return OrionMessage.fromJson(
+            Map<String, Object?>.from(Uri.splitQueryString(line)),
+          );
+        } catch (_) {
+          // Preserve legacy content as a plain assistant message.
+        }
+      }
+      return OrionMessage(line, false);
     }).toList();
   }
   Future<void> save(List<OrionMessage> messages) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, messages.map((m) =>
-      'text=${Uri.encodeQueryComponent(m.text)}&fromUser=${m.fromUser}&time=${Uri.encodeQueryComponent(m.time.toIso8601String())}'
-    ).toList());
+    await prefs.setStringList(
+      _key,
+      messages.map((message) => jsonEncode(message.toJson())).toList(),
+    );
   }
   Future<void> clear() async => (await SharedPreferences.getInstance()).remove(_key);
 }
