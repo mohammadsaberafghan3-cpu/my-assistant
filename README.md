@@ -24,7 +24,7 @@ Not implemented yet:
 
 - **Presentation:** Flutter / Material 3.
 - **Local memory:** SharedPreferences for the initial conversation store; migrate to SQLite when structured memory arrives.
-- **Local AI:** adapter to be selected and integrated after device RAM/CPU/Android version are known.
+- **Local AI:** adapter to be selected and integrated after device RAM/CPU/Android version are known. Current target test device: Samsung Galaxy A15 (SM-A155F/DSN), Android 16, One UI 8.5, 8 GB physical RAM (4 GB RAM Plus is virtual memory and is not counted as physical RAM).
 - **Cloud AI:** optional provider adapter; credentials must be kept in Android Keystore-backed secure storage and must never be committed.
 - **Agent runtime:** planner → permission check → tool execution → result verification.
 - **Safety:** confirmation gate for sending messages, deleting data, purchases, and other sensitive actions.
