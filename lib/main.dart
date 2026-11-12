@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+// Flutter Material remains the supported Material Design library for this app.
+// The installed Flutter 3.50 analyzer flags its package import as deprecated.
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -137,8 +140,13 @@ class _OrionHomeState extends State<OrionHome> {
     });
     await _memory.save(_messages);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      if (_scroll.hasClients) {
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
